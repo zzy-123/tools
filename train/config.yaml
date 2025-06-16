@@ -1,0 +1,107 @@
+# config.yaml
+
+general:
+  seed: 1234
+  device: 'cuda'  # 'cuda' or 'cpu' or 'auto' to detect automatically
+
+data:
+  train_image_path: '/home/zzy/DL/PV_Global/data/H-RPVS/train/images'
+  train_label_path: '/home/zzy/DL/PV_Global/data/H-RPVS/train/labels'
+  test_image_path: '/home/zzy/DL/PV_Global/data/H-RPVS/test/images'
+  test_label_path: '/home/zzy/DL/PV_Global/data/H-RPVS/test/labels'
+  batch_size: 8
+  num_workers: 4
+
+model:
+#  name: 'UPerNet' # Could add more types later if needed
+#  params: # 根据模型需要的参数进行配置
+#    in_channel: 3
+#    num_class: 1
+
+#  name: 'TransUNet' # Could add more types later if needed
+#  params: # 根据模型需要的参数进行配置
+#    img_size: 256
+#    num_class: 1
+
+#  name: 'DeepLab' # Could add more types later if needed
+#  params: # 根据模型需要的参数进行配置
+#    backbone: 'resnet'
+#    num_class: 1
+#    output_stride: 16
+#    freeze_bn: False
+#    pretrained: False
+
+#  name: 'UNet' # Could add more types later if needed
+#  params: # 根据模型需要的参数进行配置
+#    n_channels: 3
+#    num_class: 1
+#    bilinear: True
+
+  name: 'SegFormer' # Could add more types later if needed
+  params: # 根据模型需要的参数进行配置
+    phi: 'b0'
+    num_class: 1
+    pretrained: False
+
+aae:
+  # Enable/disable specific AAE components and configure them
+  saae:
+    enabled: True # Set to true to enable SAAE
+    model_type: 'AAE_Conv' # 'AAE_Conv' or 'AAE'
+    optimizer: 'Adam'
+    lr: 0.000001
+    rec_loss: 'MSELoss'
+    adv_loss: 'BCEWithLogitsLoss'
+  taae:
+    enabled: True # Set to true to enable TAAE
+    model_type: 'AAE_Conv' # 'AAE_Conv' or 'AAE'
+    optimizer: 'Adam'
+    lr: 0.000001
+    rec_loss: 'MSELoss'
+    adv_loss: 'BCEWithLogitsLoss'
+  caae:
+    enabled: True # Set to true to enable CAAE
+    model_type: 'AAE' # 'AAE_Conv' or 'AAE'
+    params: # Specific params for CAAE if model_type is 'AAE'
+      input_dim: 768
+    optimizer: 'Adam'
+    lr: 0.00001
+    rec_loss: 'MSELoss'
+    adv_loss: 'BCEWithLogitsLoss'
+
+training:
+  num_epochs: 60
+  optimizer:
+    type: 'Adam'
+    lr: 0.001
+    eps: 1.0e-3
+    # weight_decay: 0 # Add if needed
+  criterion:
+    type: 'BCELoss' # Options: 'BCELoss', 'FocalLoss' (needs definition/import)
+    # params: # Add parameters if criterion needs them (e.g., for FocalLoss)
+    #   alpha: 0.5
+    #   gamma: 2
+  loss_coefficients:
+    # Weights for the main generator loss (loss_G)
+    seg_loss: 1.0
+    s_adv_loss: 0.5 # Only used if saae.enabled is true
+    t_adv_loss: 0.5 # Only used if taae.enabled is true
+    c_adv_loss: 0.5 # Only used if caae.enabled is true
+    # Weights for the discriminator losses (loss_D_*)
+    s_disc_adv_loss: -0.1 # Only used if saae.enabled is true
+    t_disc_adv_loss: -0.1 # Only used if taae.enabled is true
+    c_disc_adv_loss: -0.1 # Only used if caae.enabled is true
+  scheduler:
+    type: 'StepLR' # Options: 'StepLR', 'CosineAnnealingLR', etc. or 'None'
+    params:
+      step_size: 5
+      gamma: 0.8
+
+logging:
+  checkpoint_dir: './checkpoints' # Directory to save checkpoints
+  log_dir: './logs'          # Directory to save training logs
+  save_name_prefix: 'SegFormer_STC_BCEloss' # Prefix for output file names
+  save_name_suffix: '_H-RPVS'            # Suffix for output file names (e.g., dataset name)
+  save_freq: 5 # Save model file every N epochs
+  save_checkpoint_strategy: 'best_only' # Options: 'best_only', 'periodic_and_best'
+
